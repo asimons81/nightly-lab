@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nightly Lab</title>
+  <style>
+    :root { --bg:#0f1115; --card:#151923; --muted:#9aa4b2; --accent:#2d6cdf; }
+    * { box-sizing:border-box; font-family: Inter, system-ui, sans-serif; }
+    body { margin:0; background:var(--bg); color:#e6e6e6; }
+    .wrap { max-width: 980px; margin: 40px auto; padding: 0 20px; }
+    h1 { margin:0 0 6px; font-size: 34px; }
+    .sub { color: var(--muted); margin-bottom: 22px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+    .card { background: var(--card); border:1px solid #242b38; border-radius: 14px; padding: 16px; }
+    a.button { display:inline-block; background: var(--accent); color:#fff; text-decoration:none; padding:10px 14px; border-radius:10px; font-weight:600; }
+    .muted { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Nightly Lab</h1>
+    <div class="sub">Overnight builds you can use immediately.</div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Reply Goal Tracker</h3>
+        <p class="muted">Track daily reply targets, streaks, and notes. Saves locally.</p>
+        <a class="button" href="/nightly-lab/apps/reply-goal-tracker/">Open App</a>
+      </div>
+      <div class="card">
+        <h3>Sprint Focus Timer</h3>
+        <p class="muted">Run focus sprints with a clean log + export.</p>
+        <a class="button" href="/nightly-lab/apps/sprint-focus/">Open App</a>
+      </div>
+      <div class="card">
+        <h3>Clip Namer</h3>
+        <p class="muted">Rename screen recordings with clean timestamps and prefixes.</p>
+        <a class="button" href="https://github.com/asimons81/nightly-lab/tree/main/tools/clip-namer">View Tool</a>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <a class="button" href="https://github.com/asimons81/nightly-lab/archive/refs/heads/main.zip">Download ZIP</a>
+      <span class="muted">(includes all apps + tools)</span>
+    </div>
+  </div>
+</body>
+</html>
