@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reply Goal Tracker</title>
+  <style>
+    :root { --bg:#0f1115; --card:#151923; --muted:#9aa4b2; --accent:#2d6cdf; --good:#32d583; }
+    * { box-sizing: border-box; font-family: Inter, system-ui, sans-serif; }
+    body { margin:0; background:var(--bg); color:#e6e6e6; }
+    .wrap { max-width: 900px; margin: 32px auto; padding: 0 20px; }
+    h1 { margin:0 0 8px; font-size: 28px; }
+    .sub { color: var(--muted); margin-bottom: 20px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+    .card { background: var(--card); border:1px solid #242b38; border-radius: 14px; padding: 16px; }
+    .stat { font-size: 36px; font-weight: 800; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .row { display:flex; gap:8px; align-items:center; flex-wrap: wrap; }
+    button { background: var(--accent); color: white; border: none; padding: 10px 14px; border-radius: 10px; cursor:pointer; font-weight:600; }
+    button.secondary { background: #263246; }
+    button.good { background: var(--good); }
+    input, textarea { width:100%; background:#101520; border:1px solid #263246; color:#e6e6e6; padding:10px 12px; border-radius:10px; }
+    textarea { min-height: 80px; }
+    .progress { height: 10px; background:#1c2332; border-radius: 999px; overflow:hidden; }
+    .bar { height:100%; background: var(--accent); width:0%; }
+    .log { max-height: 180px; overflow:auto; font-size: 14px; }
+    .pill { display:inline-block; padding: 4px 8px; border-radius: 999px; background:#1c2332; color:#cbd5e1; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Reply Goal Tracker</h1>
+    <div class="sub">Set today’s reply target and track progress. Saves locally.</div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="muted">Today</div>
+        <div class="stat" id="count">0</div>
+        <div class="muted">Goal: <span id="goal">100</span></div>
+        <div class="progress"><div class="bar" id="bar"></div></div>
+        <div class="row" style="margin-top:12px;">
+          <button id="add1">+1</button>
+          <button id="add5" class="secondary">+5</button>
+          <button id="add10" class="secondary">+10</button>
+          <button id="undo" class="secondary">Undo</button>
+          <button id="reset" class="secondary">Reset day</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Streak</div>
+        <div class="stat" id="streak">0</div>
+        <div class="muted">Days hit goal</div>
+        <div style="margin-top:10px;">
+          <label class="muted">Set daily goal</label>
+          <input id="goalInput" type="number" min="1" value="100" />
+          <button id="saveGoal" style="margin-top:8px;" class="good">Save goal</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Notes</div>
+        <textarea id="notes" placeholder="What worked today?"></textarea>
+        <div class="row" style="margin-top:8px;">
+          <button id="saveNote" class="secondary">Save note</button>
+          <button id="export" class="secondary">Export JSON</button>
+        </div>
+        <div class="muted" style="margin-top:10px;">Log</div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const todayKey = new Date().toISOString().slice(0,10);
+  const storeKey = `replyTracker:${todayKey}`;
+  const metaKey = `replyTracker:meta`;
+
+  const state = JSON.parse(localStorage.getItem(storeKey) || '{"count":0,"log":[],"notes":""}');
+  const meta = JSON.parse(localStorage.getItem(metaKey) || '{"goal":100,"streak":0,"lastHit":""}');
+
+  const countEl = document.getElementById('count');
+  const goalEl = document.getElementById('goal');
+  const barEl = document.getElementById('bar');
+  const streakEl = document.getElementById('streak');
+  const logEl = document.getElementById('log');
+  const goalInput = document.getElementById('goalInput');
+  const notesEl = document.getElementById('notes');
+
+  function render() {
+    countEl.textContent = state.count;
+    goalEl.textContent = meta.goal;
+    streakEl.textContent = meta.streak;
+    goalInput.value = meta.goal;
+    notesEl.value = state.notes || '';
+    const pct = Math.min(100, Math.round((state.count / meta.goal) * 100));
+    barEl.style.width = pct + '%';
+    logEl.innerHTML = state.log.map(l => `<div>• ${l}</div>`).join('') || '<span class="muted">No activity yet</span>';
+  }
+
+  function save() {
+    localStorage.setItem(storeKey, JSON.stringify(state));
+    localStorage.setItem(metaKey, JSON.stringify(meta));
+  }
+
+  function add(n){
+    state.count += n;
+    state.log.unshift(`${n} replies @ ${new Date().toLocaleTimeString()}`);
+    if (state.count >= meta.goal && meta.lastHit !== todayKey) {
+      meta.streak += 1;
+      meta.lastHit = todayKey;
+      state.log.unshift('🎯 Goal hit! Streak +1');
+    }
+    save(); render();
+  }
+
+  document.getElementById('add1').onclick = () => add(1);
+  document.getElementById('add5').onclick = () => add(5);
+  document.getElementById('add10').onclick = () => add(10);
+  document.getElementById('undo').onclick = () => { if(state.count>0){ state.count -= 1; state.log.unshift('Undo -1'); save(); render(); } };
+  document.getElementById('reset').onclick = () => { if(confirm('Reset today?')){ state.count=0; state.log=[]; save(); render(); } };
+  document.getElementById('saveGoal').onclick = () => { meta.goal = parseInt(goalInput.value || '100',10); save(); render(); };
+  document.getElementById('saveNote').onclick = () => { state.notes = notesEl.value; state.log.unshift('Saved note'); save(); render(); };
+  document.getElementById('export').onclick = () => {
+    const blob = new Blob([JSON.stringify({date: todayKey, ...state, goal: meta.goal}, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `reply-tracker-${todayKey}.json`; a.click();
+  };
+
+  render();
+</script>
+</body>
+</html>

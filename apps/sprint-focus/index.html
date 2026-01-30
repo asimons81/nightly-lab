@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sprint Focus</title>
+  <style>
+    :root { --bg:#0f1115; --card:#151923; --muted:#9aa4b2; --accent:#7c3aed; --good:#22c55e; }
+    * { box-sizing:border-box; font-family: Inter, system-ui, sans-serif; }
+    body { margin:0; background:var(--bg); color:#e6e6e6; }
+    .wrap { max-width: 900px; margin: 32px auto; padding: 0 20px; }
+    h1 { margin:0 0 8px; font-size: 28px; }
+    .sub { color: var(--muted); margin-bottom: 20px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+    .card { background: var(--card); border:1px solid #242b38; border-radius: 14px; padding: 16px; }
+    .timer { font-size: 56px; font-weight: 800; }
+    .row { display:flex; gap:8px; flex-wrap: wrap; align-items:center; }
+    button { background: var(--accent); color: white; border: none; padding: 10px 14px; border-radius: 10px; cursor:pointer; font-weight:600; }
+    button.secondary { background: #263246; }
+    input { width:100%; background:#101520; border:1px solid #263246; color:#e6e6e6; padding:10px 12px; border-radius:10px; }
+    .log { max-height: 200px; overflow:auto; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Sprint Focus</h1>
+    <div class="sub">Run work sprints and keep a lightweight focus log.</div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="timer" id="timer">25:00</div>
+        <div class="row">
+          <button id="start">Start</button>
+          <button id="pause" class="secondary">Pause</button>
+          <button id="reset" class="secondary">Reset</button>
+        </div>
+        <div style="margin-top:12px;">
+          <label class="muted">Sprint minutes</label>
+          <input id="minutes" type="number" min="5" max="120" value="25" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Session log</div>
+        <div class="log" id="log"></div>
+        <div class="row" style="margin-top:8px;">
+          <button id="export" class="secondary">Export JSON</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="muted">Stats</div>
+        <div style="font-size:36px; font-weight:800;" id="count">0</div>
+        <div class="muted">sprints completed</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const logKey = 'sprintFocus:log';
+  const countKey = 'sprintFocus:count';
+  const log = JSON.parse(localStorage.getItem(logKey) || '[]');
+  let count = parseInt(localStorage.getItem(countKey) || '0', 10);
+
+  let remaining = 25 * 60;
+  let interval = null;
+
+  const timerEl = document.getElementById('timer');
+  const logEl = document.getElementById('log');
+  const countEl = document.getElementById('count');
+
+  function render(){
+    const m = Math.floor(remaining/60).toString().padStart(2,'0');
+    const s = Math.floor(remaining%60).toString().padStart(2,'0');
+    timerEl.textContent = `${m}:${s}`;
+    logEl.innerHTML = log.map(l => `<div>• ${l}</div>`).join('') || '<span style="color:#9aa4b2">No sprints yet</span>';
+    countEl.textContent = count;
+  }
+
+  function start(){
+    if(interval) return;
+    interval = setInterval(() => {
+      remaining -= 1;
+      if(remaining <= 0){
+        clearInterval(interval); interval = null; remaining = 0;
+        count += 1; localStorage.setItem(countKey, count.toString());
+        log.unshift(`Sprint complete @ ${new Date().toLocaleTimeString()}`);
+        localStorage.setItem(logKey, JSON.stringify(log));
+        alert('Sprint complete');
+      }
+      render();
+    }, 1000);
+  }
+
+  function pause(){ if(interval){ clearInterval(interval); interval=null; } }
+  function reset(){ pause(); remaining = parseInt(document.getElementById('minutes').value || '25',10) * 60; render(); }
+
+  document.getElementById('start').onclick = start;
+  document.getElementById('pause').onclick = pause;
+  document.getElementById('reset').onclick = reset;
+  document.getElementById('minutes').onchange = reset;
+  document.getElementById('export').onclick = () => {
+    const blob = new Blob([JSON.stringify(log, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sprint-log.json'; a.click();
+  };
+
+  render();
+</script>
+</body>
+</html>
